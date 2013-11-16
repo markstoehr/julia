@@ -1310,6 +1310,10 @@ indices(I) = I
 indices(I::Int) = I
 indices(I::Real) = convert(Int, I)
 indices(I::AbstractArray{Bool,1}) = find(I)
+indices(I::(Any,))            = (indices(I[1]), )
+indices(I::(Any,Any,))        = (indices(I[1]), indices(I[2]))
+indices(I::(Any,Any,Any))     = (indices(I[1]), indices(I[2]), indices(I[3]))
+indices(I::(Any,Any,Any,Any)) = (indices(I[1]), indices(I[2]), indices(I[3]), indices(I[4]))
 indices(I::Tuple) = map(indices, I)
 
 # Generalized repmat
@@ -1454,7 +1458,7 @@ prod(A::AbstractArray{Bool}) =
 prod(A::AbstractArray{Bool}, region) =
     error("use all() instead of prod() for boolean arrays")
 
-# Pairwise (cascade) summation of A[i1:i1+n-1], which O(log n) error growth
+# Pairwise (cascade) summation of A[i1:i1+n-1], which has O(log n) error growth
 # [vs O(n) for a simple loop] with negligible performance cost if
 # the base case is large enough.  See, e.g.:
 #        http://en.wikipedia.org/wiki/Pairwise_summation

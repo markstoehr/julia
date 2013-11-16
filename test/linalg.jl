@@ -160,8 +160,8 @@ for elty in (Float32, Float64, Complex64, Complex128)
     # Test null
     a15null = null(a[:,1:5]')
     @test rank([a[:,1:5] a15null]) == 10
-    @test_approx_eq_eps norm(a[:,1:5]'a15null) zero(elty) n^2*eps(real(one(elty)))
-    @test_approx_eq_eps norm(a15null'a[:,1:5]) zero(elty) n^2*eps(real(one(elty)))
+    @test_approx_eq_eps norm(a[:,1:5]'a15null) zero(elty) 2*n*eps(real(one(elty)))
+    @test_approx_eq_eps norm(a15null'a[:,1:5]) zero(elty) 2*n*eps(real(one(elty)))
     @test size(null(b), 2) == 0
 
     # Test pinv
@@ -612,4 +612,15 @@ let
   @test kron(3,eye(3)) == 3*eye(3)                        
   @test kron(a,2) == [2, 4, 6]                            
   @test kron(b',2) == [8 10 12]                              
+end
+
+# issue #4796
+let
+    dim=2
+    S=zeros(Complex,dim,dim)
+    T=zeros(Complex,dim,dim)
+    T[:] = 1
+    z = 2.5 + 1.5im
+    S[1] = z
+    @test S*T == [z z; 0 0]
 end

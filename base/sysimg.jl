@@ -58,7 +58,7 @@ include("iterator.jl")
 import Core.Undef  # used internally by compiler
 include("inference.jl")
 
-# For OS sprcific stuff in I/O
+# For OS specific stuff in I/O
 include("osutils.jl")
 
 const DL_LOAD_PATH = ByteString[]
@@ -351,14 +351,14 @@ precompile(println, (TTY,))
 precompile(print, (TTY,Char))
 precompile(==, (Bool,Bool))
 precompile(try_include, (ASCIIString,))
-precompile(is_file_readable, (ASCIIString,))
+precompile(isfile, (ASCIIString,))
 precompile(include_from_node1, (ASCIIString,))
 precompile(source_path, (Nothing,))
 precompile(task_local_storage, ())
 precompile(atexit, (Function,))
 precompile(print, (TTY, ASCIIString))
 precompile(close, (TTY,))
-precompile(readBuffer, (TTY,Int))
+precompile(read_buffer, (TTY,Int))
 precompile(put, (RemoteRef, Any))
 precompile(getpid, ())
 precompile(print, (IOStream, Int32))

@@ -59,7 +59,7 @@ function repl_cmd(cmd)
         end
         println(pwd())
     else
-        run(@windows? cmd : detach(`$shell -i -c "$(shell_escape(cmd))"`))
+        run(@windows? cmd : `$shell -i -c "($(shell_escape(cmd))) && true"`)
     end
     nothing
 end
@@ -107,7 +107,7 @@ function eval_user_input(ast::ANY, show_value)
             else
                 ast = expand(ast)
                 value = eval(Main,ast)
-                global ans = value
+                eval(Main, :(ans = $(Expr(:quote, value))))
                 if !is(value,nothing) && show_value
                     if have_color
                         print(answer_color())
@@ -136,7 +136,7 @@ function eval_user_input(ast::ANY, show_value)
     isa(STDIN,TTY) && println()
 end
 
-function readBuffer(stream::AsyncStream, nread)
+function read_buffer(stream::AsyncStream, nread)
     global _repl_enough_stdin::Bool
     while !_repl_enough_stdin && nb_available(stream.buffer) > 0
         nread = int(search(stream.buffer,'\n')) # never more than one line or readline explodes :O
@@ -155,7 +155,7 @@ function readBuffer(stream::AsyncStream, nread)
         ptr = pointer(stream.buffer.data,stream.buffer.ptr)
         skip(stream.buffer,nread)
         #println(STDERR,stream.buffer.data[stream.buffer.ptr-nread:stream.buffer.ptr-1])
-        ccall(:jl_readBuffer,Void,(Ptr{Void},Cssize_t),ptr,nread)
+        ccall(:jl_read_buffer,Void,(Ptr{Void},Cssize_t),ptr,nread)
     end
     return false
 end
@@ -177,7 +177,7 @@ function run_repl()
         end
         ccall(:repl_callback_enable, Void, (Ptr{Uint8},), prompt_string)
         global _repl_enough_stdin = false
-        start_reading(STDIN, readBuffer)
+        start_reading(STDIN, read_buffer)
         (ast, show_value) = take(repl_channel)
         if show_value == -1
             # exit flag
@@ -216,11 +216,7 @@ function parse_input_line(io::IO)
 end
 
 # try to include() a file, ignoring if not found
-function try_include(f::String)
-    if is_file_readable(f)
-        include(f)
-    end
-end
+try_include(path::String) = isfile(path) && include(path)
 
 function process_options(args::Array{Any,1})
     global ARGS, bind_addr
@@ -350,8 +346,14 @@ function init_profiler()
 end
 
 function load_juliarc()
-    try_include(abspath(JULIA_HOME,"..","etc","julia","juliarc.jl"))
-    try_include(abspath(user_prefdir(),".juliarc.jl"))
+    # If the user built us with a specifi Base.SYSCONFDIR, check that location first for a juliarc.jl file
+    #   If it is not found, then continue on to the relative path based on JULIA_HOME
+    if !isempty(Base.SYSCONFDIR) && isfile(joinpath(Base.SYSCONFDIR,"julia","juliarc.jl"))
+        include(abspath(Base.SYSCONFDIR,"julia","juliarc.jl"))
+    else
+        try_include(abspath(JULIA_HOME,"..","etc","julia","juliarc.jl"))
+    end
+    try_include(abspath(homedir(),".juliarc.jl"))
 end
 
 

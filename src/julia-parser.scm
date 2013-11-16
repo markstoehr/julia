@@ -123,7 +123,7 @@
 				 (char>=? c #\uA1)
 				 (eqv? c #\_)))
 ;; characters that can be in an operator
-(define (opchar? c) (string.find op-chars c))
+(define (opchar? c) (and (char? c) (string.find op-chars c)))
 ;; characters that can follow . in an operator
 (define (dot-opchar? c) (and (char? c) (string.find ".*^/\\+-'" c)))
 (define (operator? c) (memq c operators))
@@ -523,9 +523,12 @@
 		 (begin (ts:put-back! s ':)
 			ex)
 		 (let ((argument
-			(if (closing-token? (peek-token s))
-			    ':  ; missing last argument
-			    (parse-expr s))))
+			(cond ((closing-token? (peek-token s))
+			       ':)  ; missing last argument
+			      ((newline? (peek-token s))
+			       (error "line break in : expression"))
+			      (else
+			       (parse-expr s)))))
 		   (if (and (not (ts:space? s))
 			    (or (eq? argument '<) (eq? argument '>)))
 		       (error (string ': argument " found instead of "
