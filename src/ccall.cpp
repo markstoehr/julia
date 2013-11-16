@@ -937,12 +937,6 @@ static Value *emit_ccall(jl_value_t **args, size_t nargs, jl_codectx_t *ctx)
         else {
             arg = emit_unboxed(argi, ctx);
             if (jl_is_bitstype(expr_type(argi, ctx))) {
-<<<<<<< HEAD
-                if (addressOf)
-                    arg = emit_unbox(largty->getContainedType(0), arg, jargty);
-                else
-                    arg = emit_unbox(largty, arg, jargty);
-=======
                 Type *totype = addressOf ? largty->getContainedType(0) : largty;
                 Type *ptype  = addressOf ? largty : PointerType::get(largty,0);
                 Type *at = arg->getType();
@@ -952,9 +946,8 @@ static Value *emit_ccall(jl_value_t **args, size_t nargs, jl_codectx_t *ctx)
                     arg = UndefValue::get(totype);
                 }
                 else {
-                    arg = emit_unbox(totype, ptype, arg);
+                    arg = emit_unbox(totype, arg, expr_type(argi, ctx));
                 }
->>>>>>> origin/master
             }
         }
 

@@ -2000,7 +2000,11 @@ static void emit_assignment(jl_value_t *l, jl_value_t *r, jl_codectx_t *ctx)
         if (bp != NULL) {
             Type *vt = bp->getType();
             if (vt->isPointerTy() && vt->getContainedType(0)!=jl_pvalue_llvmt) {
-                rval = emit_unbox(vt->getContainedType(0), emit_unboxed(r, ctx), rt);
+                // TODO: `rt` is techincally correct here, but sometimes we're not propagating type information 
+                // properly, so `rt` is a union type, while LLVM know that it's not. However, in order for this to
+                // happen, we need to already be sure somewhere that we have the right type, so vi.declType is fine 
+                // even if not techincally correct.
+                rval = emit_unbox(vt->getContainedType(0), emit_unboxed(r, ctx), vi.declType);
             }
             else {
                 rval = boxed(emit_expr(r, ctx, true),ctx,rt);
@@ -2231,14 +2235,7 @@ static Value *emit_expr(jl_value_t *expr, jl_codectx_t *ctx, bool isboxed,
         make_gcroot(a1, ctx);
         Value *a2 = boxed(emit_expr(args[2], ctx),ctx);
         make_gcroot(a2, ctx);
-<<<<<<< HEAD
-        Value *a3 = boxed(emit_expr(args[3], ctx),ctx);
-        make_gcroot(a3, ctx);
-        Value *mdargs[6] = { name, bp, literal_pointer_val((void*)bnd),
-                             a1, a2, a3 };
-=======
         Value *mdargs[5] = { name, bp, literal_pointer_val((void*)bnd), a1, a2 };
->>>>>>> origin/master
         ctx->argDepth = last_depth;
         return builder.CreateCall(jlmethod_func, ArrayRef<Value*>(&mdargs[0], 5));
     }
