@@ -124,7 +124,7 @@ function clone(url::String, pkg::String)
     info("Cloning $pkg from $url")
     ispath(pkg) && error("$pkg already exists")
     try
-        Git.run(`clone $url $pkg`)
+        Git.run(`clone -q $url $pkg`)
         Git.set_remote_url(url, dir=pkg)
     catch
         run(`rm -rf $pkg`)
@@ -451,7 +451,7 @@ function register(pkg::String)
     Git.success(`config remote.origin.url`, dir=pkg) ||
         error("$pkg: no URL configured")
     url = Git.readchomp(`config remote.origin.url`, dir=pkg)
-    register(pkg,url)
+    register(pkg,Git.normalize_url(url))
 end
 
 function isrewritable(v::VersionNumber)
