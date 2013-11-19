@@ -598,7 +598,6 @@ static Value *emit_llvmcall(jl_value_t **args, size_t nargs, jl_codectx_t *ctx)
     << jl_string_data(ir) << "\n}";
     SMDiagnostic Err = SMDiagnostic();
     std::string ir_string = ir_stream.str();
-    JL_PUTS((char*)ir_string.data(),JL_STDERR);
     Module *m = ParseAssemblyString(ir_string.data(),jl_Module,Err,jl_LLVMContext);
     if (m == NULL) {
         std::string message = "Failed to parse LLVM Assembly: \n";
@@ -616,8 +615,8 @@ static Value *emit_llvmcall(jl_value_t **args, size_t nargs, jl_codectx_t *ctx)
      * function. This also has the benefit of looking exactly like we cut/pasted it in in `code_llvm`. 
      */
     f->setLinkage(GlobalValue::LinkOnceODRLinkage);
-    f->dump();
-        // the actual call
+    
+    // the actual call
     CallInst *inst = builder.CreateCall(f,ArrayRef<Value*>(&argvals[0],nargt));
     ctx->to_inline.push_back(inst);
 
@@ -933,7 +932,6 @@ static Value *emit_ccall(jl_value_t **args, size_t nargs, jl_codectx_t *ctx)
             arg = emit_unboxed(argi, ctx);
             if (jl_is_bitstype(expr_type(argi, ctx))) {
                 Type *totype = addressOf ? largty->getContainedType(0) : largty;
-                Type *ptype  = addressOf ? largty : PointerType::get(largty,0);
                 Type *at = arg->getType();
                 if (at != jl_pvalue_llvmt && at != totype &&
                     !(at->isPointerTy() && jargty==(jl_value_t*)jl_voidpointer_type)) {
